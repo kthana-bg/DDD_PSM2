@@ -6,5 +6,6 @@ ai-edge-litert
 numpy
 pandas
 plotly
+reportlab
 twilio>=8.0.0
 piper-tts
