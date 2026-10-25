@@ -5,6 +5,7 @@ from plotly.subplots import make_subplots
 
 from database.db_manager import delete_session, get_events, get_metrics, get_session, get_sessions
 from views.ui import CARD_BG, CHART_THEME, banner, button, card, download_button, gauge, level_color, plot, table
+from utils.report import build_trip_pdf
 from utils.summary import fmt_duration, summarize, to_frames
 
 LEVEL_BAND = [(0, 30, "rgba(46,204,113,0.08)"), (30, 60, "rgba(243,156,18,0.10)"), (60, 100, "rgba(231,76,60,0.12)")]
@@ -99,10 +100,10 @@ def render_trip_summary(session_id: int, key: str = "sum"):
         table(d)
     cols = st.columns(2)
     with cols[0]:
-        download_button("Download samples (CSV)", m.drop(columns=["time"]).to_csv(index=False), f"trip_{session_id}_samples.csv", key=f"{key}_dl1")
+        download_button("Download trip report (PDF)", build_trip_pdf(session, s, metrics, events, (st.session_state.get("user") or {}).get("full_name", "")),
+                        f"trip_{session_id}_report.pdf", mime="application/pdf", key=f"{key}_pdf")
     with cols[1]:
-        if not e.empty:
-            download_button("Download events (CSV)", e.drop(columns=["time"]).to_csv(index=False), f"trip_{session_id}_events.csv", key=f"{key}_dl2")
+        download_button("Download samples (CSV)", m.drop(columns=["time"]).to_csv(index=False), f"trip_{session_id}_samples.csv", key=f"{key}_dl1")
 
 
 def render_analytics_tab(user_id: int):
