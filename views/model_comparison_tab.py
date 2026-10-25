@@ -6,7 +6,7 @@ import streamlit as st
 
 from views.live_monitor_tab import set_active_model
 from views.ui import CARD_BG, CHART_THEME, button, card, image, plot, table
-from utils.model_loader import BASELINE, DESCRIPTIONS, FIGURES_DIR, MODEL_ORDER, available_models, load_results, suggested_model
+from utils.model_loader import BASELINE, DESCRIPTIONS, FIGURES_DIR, MODEL_ORDER, available_models, load_results
 
 COLORS = {"Custom CNN": "#3498db", "MobileNetV2": "#2ecc71", "EfficientNetB0": "#f39c12"}
 
@@ -57,18 +57,8 @@ def _far_bar(df):
     return fig
 
 
-def _recommendation(df):
-    sug = suggested_model()
-    if df.empty or not sug or sug not in set(df["Model"]):
-        return
-    best = df.loc[df["F1"].idxmax()]
-    s = df[df["Model"] == sug].iloc[0]
-    overlap = s["F1 CI high"] >= best["F1 CI low"] and best["F1 CI high"] >= s["F1 CI low"]
-    text = (f"F1 {s['F1']:.3f} vs {best['F1']:.3f} for the best model ({best['Model']}); "
-            f"{s['Latency (ms)']:.1f} ms per eye crop vs {best['Latency (ms)']:.1f} ms. "
-            + ("The 95% confidence intervals overlap, so the two are statistically tied and the faster one is preferred." if overlap and sug != best["Model"]
-               else ""))
-    st.success(f"**Suggested detector: {sug}.** {text}")
+def _on_radio():
+    set_active_model(st.session_state["model_select_cmp"])
 
 
 def render_comparison_tab():
@@ -80,8 +70,6 @@ def render_comparison_tab():
     if df.empty:
         st.warning("No result files found in results/. Run the Kaggle notebooks and copy the results here.")
         return
-    _recommendation(df)
-
     a, b = st.columns(2)
     with a:
         plot(_metric_bars(df), key="cmp_bars")
@@ -100,8 +88,6 @@ def render_comparison_tab():
     view["Size (KB)"] = view["Size (KB)"].map(lambda v: f"{v:,.0f}")
     view["Threshold"] = view["Threshold"].map(lambda v: f"{v:.2f}")
     table(view.drop(columns=["F1 CI low", "F1 CI high"]))
-    st.caption("Recall = share of closed eyes that were caught (important for safety). False-alarm rate = open eyes wrongly called closed. "
-               "Thresholds were tuned on validation people and applied once to the test people. Latency was measured on a single CPU thread.")
 
     figs = [("training_curves.png", "Training curves"), ("roc_test.png", "ROC curves"),
             ("confusion_matrices.png", "Confusion matrices"), ("accuracy_vs_latency.png", "Accuracy vs latency")]
@@ -114,15 +100,11 @@ def render_comparison_tab():
 
     st.markdown("##### Active detector for live monitoring")
     avail = available_models()
-    cols = st.columns(4)
-    for col, name in zip(cols, MODEL_ORDER + [BASELINE]):
-        with col:
-            is_active = st.session_state.get("active_model") == name
-            ready = avail.get(name)
-            st.markdown(f"<div class='dg-card' style='border-left-color:{'#2ecc71' if is_active else '#3b4252'}'><p class='dg-label'>"
-                        f"{'In use' if is_active else ('Ready' if ready else 'File missing')}</p><p class='dg-value' style='font-size:18px;color:#e0e0e0'>{name}</p>"
-                        f"<p class='dg-sub'>{DESCRIPTIONS.get(name, '')}</p></div>", unsafe_allow_html=True)
-            button("Use this" if not is_active else "Selected", key=f"use_{name}", disabled=is_active, on_click=set_active_model, args=(name,))
+    options = MODEL_ORDER + [BASELINE]
+    st.session_state["model_select_cmp"] = st.session_state.get("active_model", options[0])
+    st.radio("Detector", options, key="model_select_cmp", horizontal=True, label_visibility="collapsed",
+             format_func=lambda n: n if avail.get(n) else f"{n} (file missing)", on_change=_on_radio)
+    st.caption(DESCRIPTIONS.get(st.session_state["model_select_cmp"], ""))
     if not any(avail[n] for n in MODEL_ORDER):
         st.info("The .tflite model files are not in models/eye_state/ yet. Copy custom_cnn.tflite, mobilenetv2.tflite and "
                 "efficientnetb0.tflite from your Kaggle outputs there. Until then the app uses the EAR rule.")
