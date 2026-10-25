@@ -37,7 +37,6 @@ def _register_form():
 def render_auth_page():
     st.markdown(
         f"""<div style="text-align:center;padding:28px 0 8px 0;">
-              <div style="font-size:44px;">🚗</div>
               <h1 style="color:#3b82f6;margin:4px 0 2px 0;font-size:2.2rem;">{APP_NAME}</h1>
               <p style="color:#9aa4b2;font-size:14px;margin:0;">{APP_TAGLINE}</p>
             </div>""", unsafe_allow_html=True)
