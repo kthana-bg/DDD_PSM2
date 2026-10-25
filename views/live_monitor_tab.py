@@ -93,20 +93,6 @@ def _settings():
                    "and mount the phone facing you. Camera access on a phone needs an HTTPS address.")
 
 
-def _how_it_works():
-    st.markdown("### How it works")
-    cols = st.columns(4)
-    items = [("👁️", "Eyes", "A trained model checks each eye. PERCLOS is the share of the last 30 s the eyes were closed."),
-             ("👄", "Mouth", "Mouth aspect ratio (MAR). An open mouth held for over a second counts as a yawn."),
-             ("🙂", "Head", "Head pitch from facial landmarks. A head held down counts as a nod."),
-             ("🔔", "Alerts", "The four signals form a 0-100 score. 30+ gives a soft beep, 60+ or a long eye closure sounds the alarm.")]
-    for col, (icon, title, text) in zip(cols, items):
-        col.markdown(f"<div class='dg-card'><p style='font-size:26px;margin:0'>{icon}</p><p class='dg-label'>{title}</p>"
-                     f"<p class='dg-sub' style='color:#c7cdd6'>{text}</p></div>", unsafe_allow_html=True)
-    st.info("**Set up:** place the camera at dashboard height facing your face, with good light. Press **Start trip**, click **START** "
-            "in the video box, allow the camera, then look straight ahead with eyes open for the first 8 seconds (calibration).")
-
-
 def _events_list():
     ev = st.session_state.get("recent_events", [])[:5]
     st.markdown("<p class='dg-label' style='margin-top:6px'>Recent events</p>", unsafe_allow_html=True)
@@ -205,21 +191,21 @@ def render_live_tab(user_id: int):
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        if button("▶ Start trip", key="trip_start", type="primary", disabled=st.session_state["monitoring_active"]):
+        if button("Start trip", key="trip_start", type="primary", disabled=st.session_state["monitoring_active"]):
             st.session_state.update(monitoring_active=True, session_start=time.time(), recent_events=[], finished_session_id=None,
                                     last_metric_save=0.0, recal_id=st.session_state["recal_id"] + 1)
             st.session_state["session_id"] = start_session(user_id, st.session_state["active_model"], st.session_state["sensitivity"])
             st.session_state["alert_mgr"].reset()
             st.rerun()
     with c2:
-        if button("■ End trip and show summary", key="trip_stop", disabled=not st.session_state["monitoring_active"]):
+        if button("End trip and show summary", key="trip_stop", disabled=not st.session_state["monitoring_active"]):
             end_session(st.session_state["session_id"])
             st.session_state.update(monitoring_active=False, finished_session_id=st.session_state["session_id"], session_start=None)
             st.session_state["alert_mgr"].reset()
             keep_awake(False)
             st.rerun()
     with c3:
-        if button("⟳ Recalibrate", key="trip_recal", disabled=not st.session_state["monitoring_active"],
+        if button("Recalibrate", key="trip_recal", disabled=not st.session_state["monitoring_active"],
                   help="Re-learn your normal eye, mouth and head position (look ahead for 8 s)."):
             st.session_state["recal_id"] += 1
 
@@ -230,8 +216,6 @@ def render_live_tab(user_id: int):
         keep_awake(False)
         if st.session_state.get("finished_session_id"):
             render_trip_summary(st.session_state["finished_session_id"], key="live_sum")
-        else:
-            _how_it_works()
         return
 
     quality = st.session_state.get("camera_quality", "Standard (640x480)")
