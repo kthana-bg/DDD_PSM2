@@ -7,7 +7,7 @@ _ROOT = os.path.dirname(os.path.abspath(__file__))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-st.set_page_config(page_title="DrowsyGuard", page_icon="🚗", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="DrowsyGuard", layout="wide", initial_sidebar_state="collapsed")
 
 from views.auth_page import render_auth_page
 from views.live_monitor_tab import render_live_tab
@@ -35,7 +35,7 @@ def render_header():
     user = st.session_state.get("user") or {}
     left, right = st.columns([5, 1])
     with left:
-        st.markdown(f"<div style='display:flex;align-items:center;gap:10px;padding-top:4px'><span style='font-size:28px'>🚗</span>"
+        st.markdown(f"<div style='display:flex;align-items:center;padding-top:4px'>"
                     f"<div><div style='font-size:20px;font-weight:700;color:#e5e7eb;line-height:1.1'>{APP_NAME}</div>"
                     f"<div style='font-size:12px;color:#9aa4b2'>{APP_TAGLINE} · signed in as <b style='color:#e5e7eb'>{user.get('full_name', 'User')}</b></div></div></div>",
                     unsafe_allow_html=True)
